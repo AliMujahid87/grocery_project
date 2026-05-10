@@ -14,10 +14,10 @@ def authenticate():
         username = input("Enter username: ")
         password = input("Enter password: ")
         
-        for user in users:
-            if user['username'] == username and user['password'] == password:
-                print(f"Login successful! Welcome {username} ({user['type']}).")
-                return user['type']
+        for user in users[1:]:
+            if user[0] == username and user[1] == password:
+                print(f"Login successful! Welcome {username} ({user[2]}).")
+                return user[2]
         
         print("Invalid username or password. Please try again.")
 
@@ -26,42 +26,36 @@ def enter_sales_transaction(transactions, groceries):
     operations.display_grocery_mapping(groceries)
     
     product_id = input("Enter Grocery ID: ")
-    product = next((item for item in groceries if item['id'] == product_id), None)
+    product = next((item for item in groceries[1:] if item[0] == product_id), None)
     if not product:
         print("Error: Invalid Grocery ID.")
         return
 
     try:
-        quantity = int(input(f"Enter quantity for {product['name']}: "))
+        quantity = int(input(f"Enter quantity for {product[1]}: "))
         if quantity <= 0:
             print("Error: Quantity must be positive.")
             return
             
-        current_stock = int(float(product['stock']))
+        current_stock = int(float(product[3]))
         if quantity > current_stock:
             print(f"Error: Not enough stock. Available: {current_stock}")
             return
             
-        payment = float(input(f"Enter payment received (Price per item: {product['price']}): "))
+        payment = float(input(f"Enter payment received (Price per item: {product[2]}): "))
         now = datetime.now()
         date_str = now.strftime("%d/%m/%Y")
         time_str = now.strftime("%I:%M:%S %p")
         
-        transactions.append({
-            'date': date_str,
-            'time': time_str,
-            'id': product_id,
-            'quantity': str(quantity),
-            'payment': str(payment)
-        })
-        product['stock'] = str(current_stock - quantity)
+        transactions.append([date_str, time_str, product_id, str(quantity), str(payment)])
+        product[3] = str(current_stock - quantity)
         print("Transaction added successfully.")
     except ValueError:
         print("Error: Invalid input.")
 
 def enter_new_grocery(groceries):
     """Handle entering a new grocery product."""
-    ids = [int(g['id']) for g in groceries if g['id'].isdigit()]
+    ids = [int(g[0]) for g in groceries[1:] if g[0].isdigit()]
     new_id = str(max(ids) + 1 if ids else 1)
 
     print(f"New Product ID: {new_id}")
@@ -69,7 +63,7 @@ def enter_new_grocery(groceries):
     try:
         price = float(input("Enter Price: "))
         stock = int(input("Enter Initial Stock Level: "))
-        groceries.append({'id': new_id, 'name': name, 'price': str(price), 'stock': str(stock)})
+        groceries.append([new_id, name, str(price), str(stock)])
         print("New product added.")
     except ValueError:
         print("Error: Invalid input.")
@@ -145,8 +139,8 @@ def main():
         elif choice == '8' and role == 'manager':
             operations.update_grocery_details(groceries)
         elif choice == '0':
-            data_handler.save_csv(trans_file, transactions, ['date', 'time', 'id', 'quantity', 'payment'])
-            data_handler.save_csv(groc_file, groceries, ['id', 'name', 'price', 'stock'])
+            data_handler.save_csv(trans_file, transactions)
+            data_handler.save_csv(groc_file, groceries)
             print("Data saved. Goodbye!")
             break
         else:

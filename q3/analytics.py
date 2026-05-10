@@ -26,14 +26,14 @@ def get_monthly_data(transactions, start_month, end_month, product_id=None):
     sales_values = {m: 0.0 for m in months}
     sales_counts = {m: 0 for m in months}
     
-    for t in transactions:
+    for t in transactions[1:]:
         # Transactions date format: DD/MM/YYYY
         try:
-            t_dt = datetime.strptime(t['date'], "%d/%m/%Y")
+            t_dt = datetime.strptime(t[0], "%d/%m/%Y")
             t_month = t_dt.strftime("%Y-%m")
             if t_month in months:
-                if product_id is None or t['id'] == product_id:
-                    sales_values[t_month] += float(t['payment'])
+                if product_id is None or t[2] == product_id:
+                    sales_values[t_month] += float(t[4])
                     sales_counts[t_month] += 1
         except (ValueError, KeyError):
             continue
@@ -78,7 +78,7 @@ def display_monthly_line_graphs(transactions, start_month, end_month, product_na
 
 def display_total_sales_bar_chart(transactions, groceries, start_date, end_date):
     """Display total sales per product in descending order."""
-    product_sales = {g['id']: 0.0 for g in groceries}
+    product_sales = {g[0]: 0.0 for g in groceries[1:]}
     
     try:
         s_dt = datetime.strptime(start_date, "%d/%m/%Y")
@@ -87,11 +87,11 @@ def display_total_sales_bar_chart(transactions, groceries, start_date, end_date)
         print("Error: Invalid date format. Use DD/MM/YYYY.")
         return
 
-    for t in transactions:
+    for t in transactions[1:]:
         try:
-            t_dt = datetime.strptime(t['date'], "%d/%m/%Y")
+            t_dt = datetime.strptime(t[0], "%d/%m/%Y")
             if s_dt <= t_dt <= e_dt:
-                product_sales[t['id']] += float(t['payment'])
+                product_sales[t[2]] += float(t[4])
         except (ValueError, KeyError):
             continue
             
@@ -105,7 +105,7 @@ def display_total_sales_bar_chart(transactions, groceries, start_date, end_date)
     p_names = []
     p_values = []
     for pid, val in sorted_sales:
-        name = next((g['name'] for g in groceries if g['id'] == pid), pid)
+        name = next((g[1] for g in groceries[1:] if g[0] == pid), pid)
         p_names.append(name)
         p_values.append(val)
         
@@ -130,12 +130,12 @@ def display_top_five_pie_chart(transactions, groceries, start_date, end_date):
         print("Error: Invalid date format. Use DD/MM/YYYY.")
         return
 
-    for t in transactions:
+    for t in transactions[1:]:
         try:
-            t_dt = datetime.strptime(t['date'], "%d/%m/%Y")
+            t_dt = datetime.strptime(t[0], "%d/%m/%Y")
             if s_dt <= t_dt <= e_dt:
-                pid = t['id']
-                val = float(t['payment'])
+                pid = t[2]
+                val = float(t[4])
                 product_sales[pid] = product_sales.get(pid, 0.0) + val
                 total_sales += val
         except (ValueError, KeyError):
@@ -153,7 +153,7 @@ def display_top_five_pie_chart(transactions, groceries, start_date, end_date):
     labels = []
     sizes = []
     for pid, val in top_five:
-        name = next((g['name'] for g in groceries if g['id'] == pid), pid)
+        name = next((g[1] for g in groceries[1:] if g[0] == pid), pid)
         labels.append(name)
         sizes.append(val)
         
